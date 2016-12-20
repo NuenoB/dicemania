@@ -30,6 +30,7 @@ def rand_dados(Ncaras,cuantity=1):
     return  msg
     
 def handle(msg):
+    global run
     content_type, chat_type, chat_id = telepot.glance(msg)
     pprint(msg)
     print(content_type, chat_type, chat_id)
@@ -58,6 +59,9 @@ def handle(msg):
                 bot.sendMessage(chat_id, msg)
     #            print
 #            np.save("cmd",cmd)
+        elif "/autokill" in msg['text']:
+            run=False
+            bot.sendMessage(chat_id, "apagando en proximo ciclo")
             
         elif msg['text'][0]=='/' and "d" in msg['text']: # clean "d" change to /dice 2d10 
             pre_num=msg['text'].split("d")
@@ -80,7 +84,7 @@ TOKEN ='290842773:AAE2YbSjls7xzgk3sRSoJ9v0DkS8aO-IF-k'  # get token from command
 bot = telepot.Bot(TOKEN)
 bot.message_loop(handle)
 print ('Listening ...')
-
+run=True
 # Keep the program running.
-while 1:
+while run:
     time.sleep(10)
