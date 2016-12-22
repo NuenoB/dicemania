@@ -9,23 +9,45 @@ import sys
 import time
 import telepot
 import random
+import re
 from pprint import pprint
 #import numpy as nps
 
 cmd={}
-def parse_str_dice(str_dice):# "6d5" o "d6"
-    pre_num=str_dice.split("d")
-    max_dados= 1 if pre_num[0]=="" else int(pre_num[0])
-    dice_type=pre_num[1]
-    return max_dados,dice_type
+def parse_str_dice(str_dice):# "6d5" o "d6" o "1d2k1"
+    rs_str="(?P<c>\d*)d(?P<t>\d*)k?(?P<k>\d*)(?P<s>[\+|-])?(?P<o>\d*)"
+    m=re.match(rs_str,str_dice)
+    dice_type=m.group("t")
+    max_dados= 1 if m.group("c")=="" else int(m.group("c"))
+    Nkeep= max_dados if m.group("k")=="" else int(m.group("k"))
+    print(m.group("o"))
+    offsett= 0 if m.group("o")=="" else int(m.group("s")+m.group("o"))
 
-def rand_dados(Ncaras,cuantity=1):
+    return int(max_dados),int(dice_type),int(Nkeep),int(offsett)
+
+def rand_dados(Ncaras,cuantity=1,Nkeep=0,offset=0):
     rand=0
     msg=""
+    tiradas=[]
+    for i in range(0,(cuantity)):
+        temp_rand=random.randrange(1,(Ncaras)+1)
+        tiradas.append(temp_rand)
+#        msg=msg+str(i+1) +"  ("+ str(temp_rand)+")\n"      
+#        rand=rand+temp_rand
+    order_tiradas=sorted(tiradas)
+    if Nkeep>0:
+        order_tiradas.reverse()
     for i in range(0,int(cuantity)):
-        temp_rand=random.randrange(1,int(Ncaras)+1)
-        msg=msg+str(i+1) +"  ("+ str(temp_rand)+")\n"      
-        rand=rand+temp_rand
+        t=order_tiradas[i]
+#        msg=msg+str(i+1)+"  ("+ str(t)+")\n"
+        if i<(Nkeep):
+            rand=rand+t
+            msg=msg+str(i+1)+"  ("+ str(t)+") keept\n"
+        else:
+            msg=msg+str(i+1)+"  ("+ str(t)+") not keept\n"
+    if not offset==0:
+        msg = msg + "plus " +str(offset) +"\n"
+    rand=rand+offset
     msg=msg+"Total " +str(rand)
     return  msg
     
@@ -43,7 +65,7 @@ def handle(msg):
             args=temp.split(" ")
             if len(args)>=3:
                 name_cmd = args[1]
-                n_dice, type_dice = parse_str_dice(args[2])
+                n_dice, type_dice, nkeep = parse_str_dice(args[2])
                 key=name_cmd+str(msg["from"]["id"])
                 cmd[key] ={"name_cmd":name_cmd, "n_dice":n_dice, "type_dice":type_dice, "desc": args[3] if len(args)>3 else ""}
             #            print("asd  " + cmd[chat_id])
@@ -68,9 +90,10 @@ def handle(msg):
             temp= msg['text'].strip()
             args=temp.split(" ")
             
-            n_dice, type_dice = parse_str_dice(args[0][1:])
+            n_dice, type_dice , nkeep , offsett = parse_str_dice(args[0][1:])
             
-            msg=rand_dados(type_dice,n_dice)
+            msg=rand_dados(type_dice,n_dice,nkeep,offsett)
+            
             if(len(msg)>=4096):
                 bot.sendMessage(chat_id,"sorry")    
                 
