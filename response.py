@@ -63,14 +63,22 @@ def handle(msg):
             run=False
             bot.sendMessage(chat_id, "apagando en proximo ciclo")
             
-        elif msg['text'][0]=='/' and "d" in msg['text']: # clean "d" change to /dice 2d10 
-            pre_num=msg['text'].split("d")
-            max_dados= 1 if pre_num[0][1:]=="" else int(pre_num[0][1:])
-            dice_type=pre_num[1].split("@")[0]
-            msg=rand_dados(int(dice_type),max_dados)
-            bot.sendMessage(chat_id, msg)
             
-        
+        elif msg['text'][0]=='/' and "d" in msg['text']: # clean "d" change to /dice 2d10 
+            temp= msg['text'].strip()
+            args=temp.split(" ")
+            
+            n_dice, type_dice = parse_str_dice(args[0][1:])
+            
+            msg=rand_dados(type_dice,n_dice)
+            if(len(msg)>=4096):
+                bot.sendMessage(chat_id,"sorry")    
+                
+#                for i in range(0,len(msg)%4096):
+#                    bot.sendMessage(chat_id, msg[i*4096:(i+1)*4096])
+            else:
+                bot.sendMessage(chat_id, msg)
+            
 #        else:
 #                
 #            bot.sendMessage(chat_id, msg['text'])            
@@ -87,4 +95,4 @@ print ('Listening ...')
 run=True
 # Keep the program running.
 while run:
-    time.sleep(10)
+    time.sleep(5)
